@@ -1,0 +1,11 @@
+date,invoice_id,sku,product,region,quantity,unit_price,net_sales
+2025-01-02,INV-1001,AMOX500,Amoxicillin 500mg,Baghdad,120,3.5,420
+2025-01-03,INV-1002,PARA500,Paracetamol 500mg,Basra,200,1.2,240
+2025-01-03,INV-1003,OMEP20,Omeprazole 20mg,Erbil,90,4.0,360
+2025-01-04,INV-1004,AMOX500,Amoxicillin 500mg,Najaf,60,3.5,210
+2025-01-05,INV-1005,AZI500,Azithromycin 500mg,Baghdad,75,6.0,450
+2025-01-05,INV-1006,PARA500,Paracetamol 500mg,Basra,180,1.2,216
+2025-01-06,INV-1007,OMEP20,Omeprazole 20mg,Erbil,110,4.0,440
+2025-01-07,INV-1008,AMOX500,Amoxicillin 500mg,Sulaymaniyah,50,3.5,175
+2025-01-08,INV-1009,AZI500,Azithromycin 500mg,Anbar,40,6.0,240
+2025-01-08,INV-1010,PARA500,Paracetamol 500mg,Baghdad,300,1.2,360

@@ -1,0 +1,11 @@
+{
+  "kpis": [
+    { "label": "Population (M)", "value": "45.5" },
+    { "label": "Health Spend %GDP", "value": "6.2%" },
+    { "label": "Public Hospitals", "value": "> 280" }
+  ],
+  "trend": {
+    "labels": ["2019","2020","2021","2022","2023","2024"],
+    "values": [2.1, 2.4, 2.7, 3.0, 3.2, 3.5]
+  }
+}

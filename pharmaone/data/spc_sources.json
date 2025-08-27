@@ -1,0 +1,19 @@
+{
+  "sources": [
+    {
+      "title": "Paracetamol 500mg SPC (Public)",
+      "url": "https://example.org/spc/paracetamol-500",
+      "text": "Indicated for mild to moderate pain and fever. Do not exceed 4g/day in adults."
+    },
+    {
+      "title": "Omeprazole 20mg SPC (Public)",
+      "url": "https://example.org/spc/omeprazole-20",
+      "text": "Reduces gastric acid secretion by inhibition of the H+/K+ ATPase enzyme system."
+    },
+    {
+      "title": "Azithromycin 500mg SPC (Public)",
+      "url": "https://example.org/spc/azithromycin-500",
+      "text": "Macrolide antibiotic indicated for susceptible infections. No claim of mortality reduction without comparative studies."
+    }
+  ]
+}
