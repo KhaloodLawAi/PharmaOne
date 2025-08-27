@@ -79,6 +79,12 @@ th { color: var(--muted); font-weight: 600; font-size: 12px; text-transform: upp
 .list .left { display: grid; gap: 4px; }
 .list .right { color: var(--muted); font-size: 12px; }
 
+/* Toasts */
+.toast-container { position: fixed; inset-inline-end: 16px; bottom: 16px; display: grid; gap: 8px; z-index: 9999; }
+.toast { background: var(--panel); color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); opacity: 0.98; }
+.toast.success { border-color: #34d399; }
+.toast.error { border-color: #f87171; }
+
 /* RTL */
 html[dir="rtl"] .app-container { direction: rtl; }
 html[dir="rtl"] .sidebar { border-inline-end: none; border-inline-start: 1px solid var(--border); }

@@ -35,6 +35,11 @@
             <h1 id="page-title">PharmaOne</h1>
           </div>
           <div class="topbar-right">
+            <select id="role-select" class="input" title="Role">
+              <option value="owner">Owner</option>
+              <option value="admin">Admin</option>
+              <option value="staff">Staff</option>
+            </select>
             <button id="theme-toggle" class="btn secondary" data-i18n="btn.theme">Theme</button>
             <button id="lang-toggle" class="btn" data-i18n="btn.lang">عربي</button>
           </div>
@@ -44,6 +49,8 @@
         </section>
       </main>
     </div>
+
+    <div id="toast-container" class="toast-container"></div>
 
     <!-- Libraries -->
     <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>

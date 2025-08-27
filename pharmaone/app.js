@@ -2,6 +2,7 @@
   const AppState = {
     recentActivity: JSON.parse(localStorage.getItem('pharmaone-activity') || '[]'),
     theme: localStorage.getItem('pharmaone-theme') || 'dark',
+    role: localStorage.getItem('pharmaone-role') || 'owner',
   };
 
   function saveActivity() {
@@ -17,6 +18,14 @@
     AppState.theme = theme;
     localStorage.setItem('pharmaone-theme', theme);
     document.documentElement.classList.toggle('light', theme === 'light');
+  }
+
+  function setRole(role) {
+    AppState.role = role;
+    localStorage.setItem('pharmaone-role', role);
+    const sel = document.getElementById('role-select');
+    if (sel) sel.value = role;
+    toast(`Role: ${role}`);
   }
 
   function fmt(num) {
@@ -58,6 +67,7 @@
     doc.text('PharmaOne Export', 40, 40);
     doc.addImage(imgData, 'PNG', 40, 60, imgWidth, Math.min(imgHeight, pageHeight - 100));
     doc.save(filename);
+    toast(`Exported ${filename}`);
   }
 
   async function htmlToCanvas(element, scale = 2) {
@@ -182,6 +192,7 @@
             </div>
           </div>
           <div id="sales-table-wrapper" style="max-height: 260px; overflow:auto;"></div>
+          <div id="sales-empty" class="muted" style="text-align:center; padding:8px; display:none;">No data loaded.</div>
         </div>
       </div>
     `;
@@ -212,6 +223,10 @@
       renderSalesTable(rows);
       document.getElementById('export-pdf').onclick = () => exportPdf('reporting.pdf', document.getElementById('content'));
       document.getElementById('export-csv').onclick = () => downloadCsv('reporting.csv', rows);
+      const isStaff = AppState.role === 'staff';
+      document.getElementById('export-pdf').disabled = isStaff;
+      document.getElementById('export-csv').disabled = isStaff;
+      if (isStaff) toast('Staff role: exports disabled', 'error');
     }
 
     function renderSalesChart(rows){
@@ -225,6 +240,12 @@
     function renderSalesTable(rows){
       const wrapper = document.getElementById('sales-table-wrapper');
       const header = Object.keys(rows[0] || {});
+      if (!rows.length) {
+        wrapper.innerHTML = '';
+        const empty = document.getElementById('sales-empty'); if (empty) empty.style.display = 'block';
+        return;
+      }
+      const empty = document.getElementById('sales-empty'); if (empty) empty.style.display = 'none';
       const head = `<thead><tr>${header.map(h=>`<th>${h}</th>`).join('')}</tr></thead>`;
       const body = `<tbody>${rows.map(r=>`<tr>${header.map(h=>`<td>${r[h] ?? ''}</td>`).join('')}</tr>`).join('')}</tbody>`;
       wrapper.innerHTML = `<table>${head}${body}</table>`;
@@ -243,8 +264,14 @@
         </div>
       </div>
       <div class="card">
-        <h3 style="margin-top:0;">${I18N.t('accounting.matches')}</h3>
+        <div class="row" style="justify-content: space-between; align-items:center;">
+          <h3 style="margin-top:0;">${I18N.t('accounting.matches')}</h3>
+          <div class="row">
+            <button id="acct-export" class="btn secondary">Export CSV</button>
+          </div>
+        </div>
         <div id="acct-table" style="max-height: 420px; overflow:auto;"></div>
+        <div id="acct-empty" class="muted" style="text-align:center; padding:8px; display:none;">No matches yet.</div>
       </div>
     `;
     I18N.translatePage();
@@ -261,7 +288,8 @@
       logActivity('Loaded sample invoices + campaigns');
     });
 
-    function tryMatch(){ if(invoices.length && campaigns.length){ const rows = matchInvoicesToCampaigns(invoices, campaigns); renderMatches(rows); } }
+    let lastMatches = [];
+    function tryMatch(){ if(invoices.length && campaigns.length){ lastMatches = matchInvoicesToCampaigns(invoices, campaigns); renderMatches(lastMatches); toast('Matched invoices to campaigns'); } }
 
     function matchInvoicesToCampaigns(invs, camps){
       const results = [];
@@ -311,9 +339,22 @@
     function renderMatches(rows){
       const el = document.getElementById('acct-table');
       const header = ['invoice_id','invoice_vendor','invoice_date','invoice_amount','campaign_id','campaign_name','match_vendor','match_window','match_amount','confidence','why'];
-      const head = `<thead><tr>${header.map(h=>`<th>${h}</th>`).join('')}</tr></thead>`;
-      const body = `<tbody>${rows.map(r=>`<tr>${header.map(h=>`<td>${r[h] ?? ''}${h==='confidence' ? ` <span class="badge ${r[h]}">${r[h]}</span>`:''}</td>`).join('')}</tr>`).join('')}</tbody>`;
-      el.innerHTML = `<table>${head}${body}</table>`;
+      if (!rows.length) {
+        el.innerHTML = '';
+        document.getElementById('acct-empty').style.display = 'block';
+      } else {
+        document.getElementById('acct-empty').style.display = 'none';
+        const head = `<thead><tr>${header.map(h=>`<th>${h}</th>`).join('')}</tr></thead>`;
+        const body = `<tbody>${rows.map(r=>`<tr>${header.map(h=>`<td>${r[h] ?? ''}${h==='confidence' ? ` <span class=\"badge ${r[h]}\">${r[h]}</span>`:''}</td>`).join('')}</tr>`).join('')}</tbody>`;
+        el.innerHTML = `<table>${head}${body}</table>`;
+      }
+      const btn = document.getElementById('acct-export');
+      btn.onclick = () => {
+        if (AppState.role === 'staff') { toast('Staff role: exports disabled', 'error'); return; }
+        if (!lastMatches.length) { toast('Nothing to export', 'error'); return; }
+        downloadCsv('accounting_matches.csv', lastMatches);
+        toast('Exported accounting_matches.csv');
+      };
     }
   }
 
@@ -331,7 +372,13 @@
       </div>
       <div class="grid cols-2">
         <div class="card"><h3 style="margin-top:0;">Extracted</h3><div id="tender-fields"></div></div>
-        <div class="card"><h3 style="margin-top:0;">${I18N.t('tenders.summary')}</h3><div id="tender-summary"></div></div>
+        <div class="card">
+          <div class="row" style="justify-content: space-between; align-items:center;">
+            <h3 style="margin-top:0;">${I18N.t('tenders.summary')}</h3>
+            <button id="tender-export" class="btn secondary">Download JSON</button>
+          </div>
+          <div id="tender-summary"></div>
+        </div>
       </div>
     `;
     I18N.translatePage();
@@ -343,25 +390,34 @@
     });
     document.getElementById('tender-file').addEventListener('change', async (e)=>{
       const f = e.target.files[0]; if(!f) return;
-      if (f.type === 'application/pdf' || f.name.endsWith('.pdf')){
-        const buf = await f.arrayBuffer();
-        const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
-        let all = '';
-        for (let i=1; i<=pdf.numPages; i++){
-          const page = await pdf.getPage(i);
-          const content = await page.getTextContent();
-          all += content.items.map(it=>it.str).join(' ') + '\n';
+      try {
+        if (f.type === 'application/pdf' || f.name.endsWith('.pdf')){
+          const buf = await f.arrayBuffer();
+          const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+          let all = '';
+          for (let i=1; i<=pdf.numPages; i++){
+            const page = await pdf.getPage(i);
+            const content = await page.getTextContent();
+            all += content.items.map(it=>it.str).join(' ') + '\n';
+          }
+          document.getElementById('tender-text').value = all;
+        } else {
+          document.getElementById('tender-text').value = await f.text();
         }
-        document.getElementById('tender-text').value = all;
-      } else {
-        document.getElementById('tender-text').value = await f.text();
+        toast(`Loaded ${f.name}`);
+      } catch(err) {
+        toast('Failed to read file', 'error');
       }
       logActivity(`Uploaded tender: ${f.name}`);
     });
+    let lastTender = null;
     document.getElementById('analyze-tender').addEventListener('click', ()=>{
       const text = document.getElementById('tender-text').value || '';
+      if (!text.trim()) { toast('No text to analyze', 'error'); return; }
       const res = analyzeTenderText(text);
+      lastTender = res;
       renderTenderResult(res);
+      toast('Tender analyzed');
       logActivity('Analyzed tender text');
     });
 
@@ -385,6 +441,15 @@
         <tr><th>Requirements</th><td><ul>${fields.requirements.map(r=>`<li>${r}</li>`).join('')}</ul></td></tr>
       </tbody></table>`;
       document.getElementById('tender-summary').textContent = summary;
+      const btn = document.getElementById('tender-export');
+      btn.onclick = () => {
+        if (!lastTender) { toast('Nothing to download', 'error'); return; }
+        const blob = new Blob([JSON.stringify(lastTender, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a'); a.href = url; a.download = 'tender_analysis.json'; a.click();
+        URL.revokeObjectURL(url);
+        toast('Downloaded tender_analysis.json');
+      };
     }
   }
 
@@ -515,9 +580,28 @@
 
     document.getElementById('theme-toggle').addEventListener('click', ()=> setTheme(AppState.theme === 'light' ? 'dark' : 'light'));
     document.getElementById('lang-toggle').addEventListener('click', ()=> I18N.setLang(I18N.current === 'en' ? 'ar' : 'en'));
+    const roleSel = document.getElementById('role-select');
+    if (roleSel) {
+      roleSel.value = AppState.role;
+      roleSel.addEventListener('change', ()=> setRole(roleSel.value));
+    }
 
     window.addEventListener('hashchange', router);
     router();
   });
+
+  function toast(message, type = 'success'){
+    const container = document.getElementById('toast-container');
+    if (!container) return;
+    const el = document.createElement('div');
+    el.className = `toast ${type}`;
+    el.textContent = message;
+    container.appendChild(el);
+    setTimeout(()=>{
+      el.style.transition = 'opacity 400ms ease';
+      el.style.opacity = '0';
+      setTimeout(()=> el.remove(), 450);
+    }, 2200);
+  }
 })();
 
